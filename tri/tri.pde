@@ -17,7 +17,7 @@ int pattern = 0;
 int num_patt;
 int sample_rate = 1024;
 //int used_in = sample_rate/2 + 1;
-int used_in = 200;
+int used_in = 180;
 
 
 boolean testing = false;
@@ -39,7 +39,7 @@ float spec_x = 2.75;
 
 int specSize;
 float decay = 1.2;
-float smooth = 1.12;
+float smooth = 1;
 
 void setup() {
   size(1400, 700);
@@ -78,15 +78,31 @@ void draw() {
   rimaginary = rfft.getSpectrumImaginary();
   limaginary = rfft.getSpectrumImaginary();
 
+  float bandBucket;
+  int c = 0;
+  int w = rimaginary.length/used_in -1;
+
   // combine right and left channels, decay if a frequency has lost intensity
   for (int i = 1; i < used_in + 1; i++) {
-
-    float rband = 10*log((sq(rreal[i]) + sq(rimaginary[i])))/log(10);
-    float lband = 10*log((sq(lreal[i]) + sq(limaginary[i])))/log(10);
-    float band = (rband+lband)/2;
+    bandBucket = 0;
+    float bandMax = 0;
+    int e = 0;
+    
+    if (i == used_in) {
+      e = rimaginary.length%used_in;
+    }
+    for (int q = 0; q < w + e -1; q++) {
+      float rband = 10*log((sq(rreal[i*w+q]) + sq(rimaginary[i*w+q])))/log(10);
+      float lband = 10*log((sq(lreal[i*w+q]) + sq(limaginary[i*w+q])))/log(10);
+      float band = (rband+lband)/2;
+      bandBucket += band;
+      bandMax = max(bandMax, band);
+    }
 
     levels[i-1] -= decay;    //maybe remove this :: see decay in next for loop
-    if (levels[i-1] < band) levels[i-1] = band;
+    if (levels[i-1] < bandBucket/w+e){
+      levels[i-1] = (bandBucket/w+e)*2/3+bandMax/3;
+    }
   }
 
   int top_c = 0;
