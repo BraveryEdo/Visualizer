@@ -1,6 +1,6 @@
 # Visualizer
 
-    Open and run tri.pde with Processing @ https://processing.org/ or run the executable files.
+    Open and run tri.pde with Processing @ https://processing.org/.
     
     Run with music on, click on the visualizer to see some different bar effects.
     
