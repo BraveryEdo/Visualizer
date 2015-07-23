@@ -13,33 +13,51 @@ AudioInput in;
 FFT rfft;
 FFT lfft;
 
+float llow = 99999;
+float hhigh = -99999999;
+
 int pattern = 0;
 int num_patt;
-int sample_rate = 1024;
+int sample_rate = 4096;
 //int used_in = sample_rate/2 + 1;
-int used_in = 180;
+int used_in = 200;
 
 
 boolean testing = false;
+
 float t = 0;
+//real and imaginary elements of the fft algorithm for right and left channels
 float[] rreal;
 float[] rimaginary;
 float[] lreal;
 float[] limaginary;
-float[] levels;
+
+//fft values translated to audio levels
+//current goal level
+float[] levels; 
+//previous goal levels
 float[] plevels;
+//levels for audio bars
 float[] bars;
 int bar_height = 10;
-int num_bars = 50;
+//number of bins displaying audio levels
+int num_bars = 200;
+//number of triangles in the outer ring
+int num_tri_oring = 50;
+//magnitude and frequency used by the topspec function (displays peak values for the background spectrum
 float[] TS_mag;
 float[] TS_freq;
+
+//min width between peak values
 int TS_w = 3;
+//number of values top spec looks for
 int TS_n = 60;
+//
 float spec_x = 2.75;
 
 int specSize;
 float decay = 1.2;
-float smooth = 1;
+float smooth = 1.12;
 
 void setup() {
   size(1400, 700);
@@ -78,31 +96,28 @@ void draw() {
   rimaginary = rfft.getSpectrumImaginary();
   limaginary = rfft.getSpectrumImaginary();
 
-  float bandBucket;
-  int c = 0;
-  int w = rimaginary.length/used_in -1;
-
   // combine right and left channels, decay if a frequency has lost intensity
   for (int i = 1; i < used_in + 1; i++) {
-    bandBucket = 0;
-    float bandMax = 0;
-    int e = 0;
-    
-    if (i == used_in) {
-      e = rimaginary.length%used_in;
-    }
-    for (int q = 0; q < w + e -1; q++) {
-      float rband = 10*log((sq(rreal[i*w+q]) + sq(rimaginary[i*w+q])))/log(10);
-      float lband = 10*log((sq(lreal[i*w+q]) + sq(limaginary[i*w+q])))/log(10);
-      float band = (rband+lband)/2;
-      bandBucket += band;
-      bandMax = max(bandMax, band);
+
+    float rband = 10*log((sq(rreal[i]) + sq(rimaginary[i])))/log(10);
+    float lband = 10*log((sq(lreal[i]) + sq(limaginary[i])))/log(10);
+    float band = max(0, (rband+lband)/2);
+
+
+    if (testing) {
+      if (band < llow) {
+        llow = band;
+        println("new low: ", llow);
+      }
+
+      if (band > hhigh) {
+        hhigh = band;
+        println("new high: ", hhigh);
+      }
     }
 
-    levels[i-1] -= decay;    //maybe remove this :: see decay in next for loop
-    if (levels[i-1] < bandBucket/w+e){
-      levels[i-1] = (bandBucket/w+e)*2/3+bandMax/3;
-    }
+    levels[i-1] -= decay;
+    if (levels[i-1] < band) levels[i-1] = band;
   }
 
   int top_c = 0;
@@ -129,7 +144,7 @@ void draw() {
 
     if (levels[i] > 0 && include && top_c < TS_n) {
       if (i == 1) {
-        TS_mag[top_c] = min(60, levels[i]);
+        TS_mag[top_c] = min(100, levels[i]);
         TS_freq[top_c++] = 0;
       } else {
         TS_mag[top_c] = levels[i];
@@ -209,59 +224,57 @@ void equalizerRing(float _x, float _y, int nbars, float t) {
 
   avg /= num_bars;
 
-  //  if(avg > 30 && pattern == 0){
-  //    pattern = (int) random(num_patt); 
-  //  }
-
   num_patt = 5;
   if (pattern == 0) {
     for (int i = 0; i < num_bars; i++) {
       bars[i] = levels[i];
     }
   } else if (pattern == 1) {
+    // wave traverse the bars
     for (int i = 0; i < num_bars; i++) {
       bars[i] = 100*sin(2*t+3*i);
     }
   } else if (pattern == 2) {
+    // alternating bar heights (0 or 100)
     for (int i = 0; i < num_bars; i++) {
       bars[i] = 100*(i%2);
     }
   } else if (pattern == 3) {
+    // all max bar height
     for (int i = 0; i < num_bars; i++) {
       bars[i] = 100;
     }
   } else if (pattern == 4) {
+    // alternating bar heights (40 or 60)
     for (int i = 0; i < num_bars; i++) {
       bars[i] = 40+20*(i%2);
     }
     max = 80;
   } else if (pattern == 5) {
-    //    for (int m = 0; m < TS_freq.length-1; m++) {
-    //      int x1 = (int) (TS_freq[m] + 1);
-    //      float f1 = TS_mag[m]; 
-    //      int x2 = (int) (TS_freq[m+1] + 1);
-    //      float f2 = TS_mag[m+1];
-    //      int mx = (x1+x2)/2;
-    //      float mf = (f1+f1)/2;
-    //      for (int i = x1; i < x2; i++) {
-    //        if (i > mf) {
-    //        } else {
-    //        }
-    //      }
-    //    }
+      /*  for (int m = 0; m < TS_freq.length-1; m++) {
+          int x1 = (int) (TS_freq[m] + 1);
+          float f1 = TS_mag[m]; 
+          int x2 = (int) (TS_freq[m+1] + 1);
+          float f2 = TS_mag[m+1];
+          int mx = (x1+x2)/2;
+          float mf = (f1+f1)/2;
+          for (int i = x1; i < x2; i++) {
+            if (i > mf) {
+            } else {
+            }
+          }
+        }*/
   }
 
-  float mult = 1;
-  if (pattern== 0) mult = 1.25; 
 
   float o_rot = -.75*t+2*s;
   float i_rad = 187-5*s;
-  float o_rad = (200-7*s+max)*mult;
+  float o_rad = (200-7*s+max);
   stroke(255);
   ring(_x, _y, nbars, i_rad, o_rot, false);
   bars(_x, _y, i_rad, 187-5*s, max, t);
   stroke(255);
-  ring(_x, _y, nbars, o_rad, o_rot, true);
+  ring(_x, _y, num_tri_oring, o_rad, o_rot, true);
 }
 
 void bars(float _x, float _y, float low, float min, float max, float rot) {
