@@ -13,6 +13,7 @@ AudioInput in;
 FFT rfft;
 FFT lfft;
 
+// test values for printing highs/lows
 float llow = 99999;
 float hhigh = -99999999;
 
@@ -52,7 +53,7 @@ float[] TS_freq;
 int TS_w = 3;
 //number of values top spec looks for
 int TS_n = 60;
-//
+//spacing between each frequency for the spectrogram
 float spec_x = 2.75;
 
 int specSize;
@@ -61,7 +62,7 @@ float smooth = 1.12;
 
 void setup() {
   size(1400, 700);
-  frameRate(60);
+  frameRate(240);
   smooth();
 
   minim = new Minim(this);
