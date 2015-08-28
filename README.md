@@ -2,6 +2,10 @@
 
     Open and run tri.pde with Processing @ https://processing.org/.
     
+	With version 3.0 the minim audio processing library needs to be installed explicitly.
+	
+	go to sketch -> Import Library -> New -> search for minim and install it.
+	
     Run with music on, click on the visualizer to see some different bar effects.
     
     If it responds slowly on your processor, try lowering the sample_rate/used_in values.

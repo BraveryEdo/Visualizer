@@ -116,7 +116,8 @@ int framerateMisc = 1; //how often the framerate display will be updated
 void setup() {
 
   //init window
-  size(window_x, window_y); //creates a new window
+ // size(window_x, window_y); //creates a new window
+ size(1280, 720);
   graphics = createGraphics(window_x, window_y);//creates the draw area
   frameRate(framerateRender); //tells the draw function to run
 
@@ -710,4 +711,3 @@ void stop() {
   in.close();
   minim.stop();
 }
-
